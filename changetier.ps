@@ -1,0 +1,40 @@
+$StorageAccount = "your Storage accunt"
+$StorageAccountKey ="your storage access key"
+$MaxReturn = 5000
+$Token = $Null
+$Total = 0
+
+$StorageContext = New-AzureStorageContext -StorageAccountName $StorageAccount -StorageAccountKey $StorageAccountKey
+
+$Containers = Get-AzureStorageContainer -Context $StorageContext
+
+foreach ($Container in $Containers)
+{
+     "Container:" + $Container.Name
+      $Token = $Null
+      do
+       {
+         $Blobs = Get-AzureStorageBlob -Container  $Container.Name -Context $StorageContext -MaxCount $MaxReturn  -ContinuationToken $Token
+
+         "Total Blobs: " + $Blobs.Count
+          $NewBlobs = $Blobs | Where-Object {$_.ICloudBlob.Properties.StandardBlobTier -eq 'Hot'}
+
+          "Filtered Blobs: " + $NewBlobs.Count
+
+           foreach ($Blob in $NewBlobs)
+          {
+             "Blob:" + $Blob.Name + " | " + $Blob.ICloudBlob.Properties.StandardBlobTier
+              $Blob.ICloudBlob.SetStandardBlobTier("Archive")
+          }
+
+          $Total += $Blobs.Count
+          if($Blobs.Length -le 0) { Break;}
+
+          $Token = $Blobs[$blobs.Count -1].ContinuationToken;
+
+     }
+
+      While ($Token -ne $Null)
+   
+
+}
