@@ -1,0 +1,17 @@
+$accountName = ""
+$key = ""
+$containerName = ""
+$blobName = ""
+$tier = ""
+
+# Get the storage account context
+$ctx = New-AzStorageContext -StorageAccountName $accountName -StorageAccountKey $key
+
+# Change the blob's access tier.
+$blob = Get-AzStorageBlob -Container $containerName -Blob $blobName -Context $ctx
+if ($blob.ICloudBlob.GetType().Name -eq "CloudBlobContainer") {
+        Write-Host "The blob '$blobName' is a container."
+    } else {
+        Write-Host "The blob '$blobName' is a file."
+        $blob.BlobClient.SetAccessTier($tier)
+    }
