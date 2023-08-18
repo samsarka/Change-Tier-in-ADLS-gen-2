@@ -1,40 +1,26 @@
-$StorageAccount = "your Storage accunt"
-$StorageAccountKey ="your storage access key"
-$MaxReturn = 5000
-$Token = $Null
-$Total = 0
+$accountName = ""
+$key = ""
+$tier = ""
 
-$StorageContext = New-AzureStorageContext -StorageAccountName $StorageAccount -StorageAccountKey $StorageAccountKey
+# Get the storage account context
+$ctx = New-AzStorageContext -StorageAccountName $accountName -StorageAccountKey $key
 
-$Containers = Get-AzureStorageContainer -Context $StorageContext
+$containers = Get-AzStorageContainer -Context $ctx
 
-foreach ($Container in $Containers)
+Foreach($container in $containers) 
 {
-     "Container:" + $Container.Name
-      $Token = $Null
-      do
-       {
-         $Blobs = Get-AzureStorageBlob -Container  $Container.Name -Context $StorageContext -MaxCount $MaxReturn  -ContinuationToken $Token
+    $blobs = Get-AzStorageBlob -Container $container.Name -Context $ctx
 
-         "Total Blobs: " + $Blobs.Count
-          $NewBlobs = $Blobs | Where-Object {$_.ICloudBlob.Properties.StandardBlobTier -eq 'Hot'}
+    Foreach($blob in $blobs) 
+    {
+        Write-Host $blob.Name
 
-          "Filtered Blobs: " + $NewBlobs.Count
-
-           foreach ($Blob in $NewBlobs)
-          {
-             "Blob:" + $Blob.Name + " | " + $Blob.ICloudBlob.Properties.StandardBlobTier
-              $Blob.ICloudBlob.SetStandardBlobTier("Archive")
-          }
-
-          $Total += $Blobs.Count
-          if($Blobs.Length -le 0) { Break;}
-
-          $Token = $Blobs[$blobs.Count -1].ContinuationToken;
-
-     }
-
-      While ($Token -ne $Null)
-   
-
+         if ($blob.ICloudBlob.GetType().Name -eq "CloudBlobContainer") {
+        Write-Host "The blob '$blobName' is a container."
+    } else {
+        Write-Host "The blob '$blobName' is a file."
+        $blob.BlobClient.SetAccessTier($tier)
+    }
+        
+    }
 }
